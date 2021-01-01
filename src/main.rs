@@ -3,10 +3,19 @@ extern crate xml;
 use std::fs::File;
 use std::io::BufReader;
 
+use std::path::PathBuf;
+use structopt::StructOpt;
 use xml::attribute::OwnedAttribute;
 use xml::name::OwnedName;
 use xml::reader::{EventReader, XmlEvent};
-use xml::writer::{EmitterConfig};
+use xml::writer::EmitterConfig;
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "basic")]
+struct Opt {
+    input: PathBuf,
+    output: PathBuf,
+}
 
 fn reverse_trkseg(trksegs: Vec<XmlEvent>) -> Vec<XmlEvent> {
     let mut result = Vec::with_capacity(trksegs.len());
@@ -36,13 +45,15 @@ fn reverse_trkseg(trksegs: Vec<XmlEvent>) -> Vec<XmlEvent> {
 }
 
 fn main() {
-    let file = File::open("./test/wada.gpx").unwrap();
+    let opt = Opt::from_args();
+
+    let file = File::open(opt.input).unwrap();
     let file = BufReader::new(file);
 
     let parser = EventReader::new(file);
     let mut trksegs: Vec<XmlEvent> = vec![];
     let mut is_treak = false;
-    let mut file = File::create("output.gpx").unwrap();
+    let mut file = File::create(opt.output).unwrap();
     let mut writer = EmitterConfig::new()
         .perform_indent(true)
         .create_writer(&mut file);
