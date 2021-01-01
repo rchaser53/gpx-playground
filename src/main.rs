@@ -6,36 +6,68 @@ use std::io::BufReader;
 use xml::attribute::OwnedAttribute;
 use xml::name::OwnedName;
 use xml::reader::{EventReader, XmlEvent};
-use xml::writer::{EmitterConfig, EventWriter, Result, XmlEvent as WXMLEvent};
+use xml::writer::{EmitterConfig};
+
+fn reverse_trkseg(trksegs: Vec<XmlEvent>) -> Vec<XmlEvent> {
+    let mut result = Vec::with_capacity(trksegs.len());
+    let mut trks = vec![];
+    let mut trksegs_iter = trksegs.into_iter();
+    while let Some(e) = trksegs_iter.next() {
+        let mut temp = vec![];
+        temp.push(e);
+        while let Some(e) = trksegs_iter.next() {
+            temp.push(e.clone());
+            if let XmlEvent::EndElement { ref name } = e {
+                if name.local_name == "trkpt" {
+                    break;
+                }
+            }
+        }
+        trks.push(temp);
+    }
+    trks.reverse();
+
+    for trk in trks {
+        for tag in trk {
+            result.push(tag);
+        }
+    }
+    result
+}
 
 fn main() {
-    let file = File::open("./test/test.gpx").unwrap();
+    let file = File::open("./test/wada.gpx").unwrap();
     let file = BufReader::new(file);
 
     let parser = EventReader::new(file);
-    let mut treak: Vec<XmlEvent> = vec![];
+    let mut trksegs: Vec<XmlEvent> = vec![];
     let mut is_treak = false;
-    let mut file = File::create("output.xml").unwrap();
+    let mut file = File::create("output.gpx").unwrap();
     let mut writer = EmitterConfig::new()
         .perform_indent(true)
         .create_writer(&mut file);
     for e in parser {
         if is_treak {
             match e {
-                Ok(XmlEvent::EndElement { ref name, .. }) => {
-                    if &name.local_name == "trk" {
+                Ok(XmlEvent::EndElement { name }) => {
+                    if &name.local_name == "trkseg" {
                         is_treak = false;
-                        treak.reverse();
-                        for ie in treak {
+                        for ie in reverse_trkseg(trksegs) {
                             if let Some(v) = ie.as_writer_event() {
                                 writer.write(v).expect("parse failed");
                             }
                         }
-                        treak = vec![];
+                        trksegs = vec![];
+                        let end_event = XmlEvent::EndElement { name };
+                        writer
+                            .write(end_event.as_writer_event().unwrap())
+                            .expect("parse failed");
+                    } else {
+                        trksegs.push(XmlEvent::EndElement { name });
                     }
                 }
                 Ok(e) => {
-                    treak.push(e);
+                    trksegs.push(e);
                 }
                 _ => {}
             }
@@ -43,14 +75,11 @@ fn main() {
             let e = match e {
                 Ok(XmlEvent::StartElement {
                     name,
-                    mut attributes,
+                    attributes,
                     namespace,
                 }) => {
-                    if &name.local_name == "trk" {
+                    if &name.local_name == "trkseg" {
                         is_treak = true;
-                    }
-                    if &name.local_name == "author" {
-                        attributes.push(OwnedAttribute::new(OwnedName::local("attr"), "bar"));
                     }
                     XmlEvent::StartElement {
                         name,
