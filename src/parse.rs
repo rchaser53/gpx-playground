@@ -1,9 +1,8 @@
 use std::io::{Read, Write};
 
+use super::trkseg::reverse_trkseg;
 use xml::reader::{EventReader, Result, XmlEvent};
 use xml::writer::EventWriter;
-
-use super::trkseg::reverse_trkseg;
 
 pub struct ParsedXML {
     pre: Vec<XmlEvent>,
@@ -20,7 +19,7 @@ fn write_xml<W: Write>(writer: &mut EventWriter<W>, input: Vec<XmlEvent>) -> Res
     Ok(())
 }
 
-pub fn execute_command<R: Read, W: Write>(
+pub fn reverse<R: Read, W: Write>(
     parser: EventReader<R>,
     mut writer: EventWriter<W>,
 ) -> Result<()> {
@@ -28,7 +27,6 @@ pub fn execute_command<R: Read, W: Write>(
     write_xml(&mut writer, persed_xml.pre)?;
     write_xml(&mut writer, persed_xml.trksegs)?;
     write_xml(&mut writer, persed_xml.post)?;
-
     Ok(())
 }
 
