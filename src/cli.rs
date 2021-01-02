@@ -3,10 +3,10 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
-pub enum Opt {
+pub enum Command {
     Reverse { input: PathBuf, output: PathBuf },
 }
 
-pub fn get_option() -> Opt {
-    Opt::from_args()
+pub fn get_command() -> Command {
+    Command::from_args()
 }
