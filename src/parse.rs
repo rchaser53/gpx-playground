@@ -31,6 +31,20 @@ pub fn reverse<R: Read, W: Write>(
     Ok(())
 }
 
+pub fn concat<R: Read, W: Write>(
+    parser_a: EventReader<R>,
+    parser_b: EventReader<R>,
+    mut writer: EventWriter<W>,
+) -> Result<()> {
+    let persed_xml_a = parse_xml(parser_a)?;
+    let persed_xml_b = parse_xml(parser_b)?;
+    write_xml(&mut writer, persed_xml_a.pre)?;
+    write_xml(&mut writer, persed_xml_a.trksegs)?;
+    write_xml(&mut writer, persed_xml_b.trksegs)?;
+    write_xml(&mut writer, persed_xml_b.post)?;
+    Ok(())
+}
+
 pub fn parse_xml<R: Read>(mut parser: EventReader<R>) -> Result<ParsedXML> {
     let mut pre = vec![];
     let mut trksegs: Vec<XmlEvent> = vec![];
