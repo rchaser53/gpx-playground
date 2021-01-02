@@ -9,7 +9,7 @@ mod parse;
 mod trkseg;
 
 use cli::{get_option, Opt};
-use parse::parse;
+use parse::execute_command;
 
 fn main() {
     let Opt { input, output } = get_option();
@@ -22,5 +22,5 @@ fn main() {
         .perform_indent(true)
         .create_writer(&mut file);
 
-    parse(parser, writer).unwrap();
+    execute_command(parser, writer).unwrap();
 }
