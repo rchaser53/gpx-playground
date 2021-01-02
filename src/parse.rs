@@ -23,7 +23,8 @@ pub fn reverse<R: Read, W: Write>(
     parser: EventReader<R>,
     mut writer: EventWriter<W>,
 ) -> Result<()> {
-    let persed_xml = parse_xml(parser)?;
+    let mut persed_xml = parse_xml(parser)?;
+    persed_xml.trksegs = reverse_trkseg(persed_xml.trksegs);
     write_xml(&mut writer, persed_xml.pre)?;
     write_xml(&mut writer, persed_xml.trksegs)?;
     write_xml(&mut writer, persed_xml.post)?;
@@ -45,7 +46,6 @@ pub fn parse_xml<R: Read>(mut parser: EventReader<R>) -> Result<ParsedXML> {
                 XmlEvent::EndElement { name } => {
                     if &name.local_name == "trkseg" {
                         is_treak = false;
-                        trksegs = reverse_trkseg(trksegs);
                         post.push(XmlEvent::EndElement { name });
                     } else {
                         trksegs.push(XmlEvent::EndElement { name });
